@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Княз Батенберг: Решения и Съдби</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Montserrat', sans-serif; }
+        .serif { font-family: 'Playfair Display', serif; }
+        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .progress-transition { transition: width 0.5s ease-in-out; }
+        
+        /* Гарантираме, че лицето на портретите винаги се вижда */
+        .portrait-img {
+            object-fit: cover;
+            object-position: top center;
+        }
+
+        /* Подобрен скрол за десктоп */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #fef3c7; }
+        ::-webkit-scrollbar-thumb { background: #78350f; border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-slate-900 min-h-screen flex items-center justify-center p-0 sm:p-4">
+
+    <div id="game-container" class="w-full max-w-6xl bg-amber-50 sm:rounded-3xl shadow-2xl overflow-hidden border border-amber-200 flex flex-col min-h-screen sm:min-h-[90vh] relative">
+        
+        <!-- Header -->
+        <div class="bg-amber-900 text-amber-50 p-4 sm:p-6 text-center border-b-4 border-amber-700 shadow-md z-10">
+            <h1 class="text-xl sm:text-3xl font-bold tracking-widest uppercase">Княз Батенберг: Решения и Съдби</h1>
+            <p id="player-display" class="text-amber-200 text-xs sm:text-sm mt-1 font-medium hidden"></p>
+        </div>
+
+        <div id="content" class="p-4 sm:p-8 flex-grow flex flex-col overflow-y-auto">
+            <!-- Content -->
+        </div>
+    </div>
+
+    <script>
+        const CASES = [
+            {
+                id: 1, year: "1877 г.", title: "Навечерието на Освобождението",
+                description: "Вие сте Александър Батенберг, млад офицер. Руско-турската война започва. Вашето участие ще определи бъдещия ви авторитет.",
+                imageUrl: "https://i.ytimg.com/vi/_qm9hYM3jlc/sddefault.jpg",
+                imageAlt: "[Боевете на Шипка]",
+                source: "„Моето сърце бие за този народ, който толкова е страдал.“",
+                options: [
+                    { text: "Включвам се в предните части на армията.", impacts: { foreign: 10, internal: 20, unification: 5 }, feedback: "Вашата храброст при Шипка ви прави легенда сред българите." },
+                    { text: "Служа в щаба на Императора.", impacts: { foreign: 5, internal: -10, unification: 0 }, feedback: "Печелите политически опит, но губите връзката с обикновения войник." }
+                ]
+            },
+            {
+                id: 2, year: "1879 г.", title: "Изборът в Търново",
+                description: "Великото народно събрание ви избира за Княз. Конституцията е твърде либерална. Как ще реагирате?",
+                imageUrl: "https://plovdivnow.bg/news/2023/04/17/17-april-istoriiata-aleksandar-357.png",
+                imageAlt: "[Княз Александър I]",
+                source: "„Заклевам се да пазя Търновската конституция!“",
+                options: [
+                    { text: "Приемам и спазвам законите.", impacts: { foreign: 0, internal: 20, unification: 0 }, feedback: "Либералите ви подкрепят, но управлението е трудно." },
+                    { text: "Търся начини за повече власт.", impacts: { foreign: 10, internal: -15, unification: 0 }, feedback: "Това създава първото голямо напрежение в страната." }
+                ]
+            },
+            {
+                id: 3, year: "1881 г.", title: "Режим на пълномощията",
+                description: "Искате пълна власт за 7 години, за да въведете ред в държавата. Това е огромен политически риск.",
+                imageUrl: "https://www.marginalia.bg/wp-content/uploads/2026/03/konstitucia-.jpg",
+                imageAlt: "[Търновска конституция]",
+                source: "„Аз не мога да нося отговорност, без да имам власт.“",
+                options: [
+                    { text: "Суспендирам конституцията.", impacts: { foreign: 15, internal: -30, unification: -5 }, feedback: "Редът се завръща, но на висока демократична цена." },
+                    { text: "Оставам в рамките на закона.", impacts: { foreign: -5, internal: 15, unification: 5 }, feedback: "Кризата продължава, но спасявате демократичния облик." }
+                ]
+            },
+            {
+                id: 4, year: "1882 г.", title: "Руските „наставници“",
+                description: "Руските генерали в кабинета се държат като господари. Трябва да защитите българското достойнство.",
+                imageUrl: "https://faktor.bg/static/downloads/uploads/Images_3/A/alexander-treti.jpg",
+                imageAlt: "[Император Александър III]",
+                source: "„Генералите гледат на мен като на руски губернатор.“",
+                options: [
+                    { text: "Ограничавам влиянието им.", impacts: { foreign: -25, internal: 20, unification: 10 }, feedback: "Русия приема това като лично оскърбление. Отношенията се смразяват." },
+                    { text: "Сътруднича с тях засега.", impacts: { foreign: 20, internal: -20, unification: -10 }, feedback: "Българите започват да ви подозират в предателство." }
+                ]
+            },
+            {
+                id: 5, year: "1883 г.", title: "Помирение с народа",
+                description: "Осъзнавате грешката на личния режим. Как да върнете доверието на българите?",
+                imageUrl: "https://epochtimes.bg/wp-content/uploads/2021/09/alexander_battenberg.jpg",
+                imageAlt: "[Портрет на Батенберг]",
+                source: "„Връщам се към законността, тя е единственият път.“",
+                options: [
+                    { text: "Възстановявам Конституцията.", impacts: { foreign: -10, internal: 30, unification: 10 }, feedback: "Народът празнува! Вие отново сте „народният княз“." },
+                    { text: "Правя само козметични промени.", impacts: { foreign: 5, internal: -10, unification: 0 }, feedback: "Доверието остава ниско, опозицията се засилва." }
+                ]
+            },
+            {
+                id: 6, year: "1885 г.", title: "Съединението",
+                description: "Пловдив въстава. Русия е против. Ще приемете ли короната на обединена България?",
+                imageUrl: "https://trud.bg/storage/media/2023-09/1578472/50-_(4)_3328148917230599988_original.png",
+                imageAlt: "[Съединението]",
+                source: "„Моята съдба е неразривно свързана със съдбата на този народ.“",
+                options: [
+                    { text: "Признавам го с Манифест.", impacts: { foreign: -30, internal: 30, unification: 40 }, feedback: "Вие сте символ на единството. Русия ви задрасква окончателно." },
+                    { text: "Изчаквам решение на Великите сили.", impacts: { foreign: 15, internal: -30, unification: -20 }, feedback: "Съединението можеше да бъде загубено заради нерешителност." }
+                ]
+            },
+            {
+                id: 7, year: "Ноември 1885 г.", title: "Сливница",
+                description: "Сърбия ни напада. Сливница е последната надежда на България.",
+                imageUrl: "https://upload.wikimedia.org/wikipedia/commons/2/26/Battle_of_Slivnitsa.jpg",
+                imageAlt: "[Битката при Сливница]",
+                source: "„Войници, пред вас е пътя към София, зад вас е България!“",
+                options: [
+                    { text: "Оставам на фронта докрай.", impacts: { foreign: 10, internal: 25, unification: 20 }, feedback: "Победата при Сливница легитимира Съединението." },
+                    { text: "Търся дипломатически изход.", impacts: { foreign: 15, internal: -5, unification: 0 }, feedback: "Войната спира, но България губи военната си слава." }
+                ]
+            },
+            {
+                id: 8, year: "1886 г.", title: "Превратът",
+                description: "Офицери-русофили ви арестуват в двореца. Искат абдикация.",
+                imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR6GWoblyjWjx3IvzrDABsMxbPV14_yDRVeaA&s",
+                imageAlt: "[Детронирането]",
+                source: "„Боже, пази България!“",
+                options: [
+                    { text: "Подписвам, за да няма кръв.", impacts: { foreign: 10, internal: -20, unification: -5 }, feedback: "Напускате страната, докато Стамболов готви отговор." },
+                    { text: "Оказвам съпротива.", impacts: { foreign: -10, internal: 10, unification: 0 }, feedback: "Рискувате гражданска война с непредвидим край." }
+                ]
+            },
+            {
+                id: 9, year: "Август 1886 г.", title: "Завръщането",
+                description: "Стамболов ви връща триумфално. Какво ще пишете на руския Император?",
+                imageUrl: "https://www.1001kartini.com/5021/3655-grafichen-portret-na-stefan-stambolov-kartina-s-efekten-rchen-relef-s-3d-maslo-individualna-izrabotka-po-porchka.jpg",
+                imageAlt: "[Стефан Стамболов]",
+                source: "„Тъй като Русия ми даде короната, тя може да си я вземе.“",
+                options: [
+                    { text: "Изпращам телеграма за мир.", impacts: { foreign: 10, internal: -20, unification: 0 }, feedback: "Това е политическа грешка — Императорът остава безмилостен." },
+                    { text: "Обявявам пълна независимост.", impacts: { foreign: -30, internal: 25, unification: 10 }, feedback: "Конфликтът е окончателен, но духът на народа е свободен." }
+                ]
+            },
+            {
+                id: 10, year: "Септември 1886 г.", title: "Втората абдикация",
+                description: "За да спасите Съединението и мира, трябва да напуснете трона завинаги.",
+                imageUrl: "https://www.bulgarianhistory.org/wp-content/uploads/2013/04/%D0%9F%D0%BE%D1%80%D1%82%D1%80%D0%B5%D1%82-%D0%BD%D0%B0-%D0%9A%D0%BD%D1%8F%D0%B7-%D0%90%D0%BB%D0%B5%D0%BA%D1%81%D0%B0%D0%BD%D0%B4%D1%8A%D1%80-I-%D0%91%D0%B0%D1%82%D0%B5%D0%BD%D0%B1%D0%B5%D1%80%D0%B3-%D1%81%D0%BA%D0%BE%D1%80%D0%BE-%D1%81%D0%BB%D0%B5%D0%B4-%D0%BF%D1%80%D0%B8%D1%81%D1%82%D0%B8%D0%B3%D0%B0%D0%BD%D0%B5%D1%82%D0%BE-%D0%BC%D1%83-%D0%B2-%D0%91%D1%8A%D0%BB%D0%B3%D0%B0%D1%80%D0%B8%D1%8F-%D0%BE%D0%BA%D0%BE%D0%BB%D0%BE-1879-1881-%D0%B3-340x500.jpg",
+                imageAlt: "[Последната снимка на княза]",
+                source: "„Напускам България, за да отстраня последната пречка.“",
+                options: [
+                    { text: "Абдикирам за мира.", impacts: { foreign: 20, internal: 10, unification: 10 }, feedback: "Това е вашата саможертва. България остава цяла." },
+                    { text: "Оставам и се боря.", impacts: { foreign: -50, internal: 30, unification: -20 }, feedback: "Рискувате окупация, която би унищожила страната." }
+                ]
+            },
+            {
+                id: 11, year: "1886-1893 г.", title: "Изгнание",
+                description: "Вече сте граф Хартенау. Живеете в Австрия, но винаги мислите за България.",
+                imageUrl: "https://conservative.bg/wp-content/uploads/2019/04/batenberg1-679x1024.jpg",
+                imageAlt: "[Граф Хартенау]",
+                source: "„България винаги ще бъде в мислите ми.“",
+                options: [
+                    { text: "Живея скромно и достойно.", impacts: { foreign: 10, internal: 5, unification: 0 }, feedback: "Оставате неопетнен символ на българската кауза." },
+                    { text: "Опитвам се да влияя на политиката.", impacts: { foreign: -10, internal: -10, unification: -5 }, feedback: "Това само затруднява дипломацията на наследника ви." }
+                ]
+            },
+            {
+                id: 12, year: "Вечен дом", title: "Заветът",
+                description: "Вашето последно желание е да бъдете погребан в България. Къде ще бъде вечният ви дом?",
+                imageUrl: "https://pylnoshtastie.com/wp-content/uploads/2017/11/IMG_6192.jpg",
+                imageAlt: "[Мавзолеят]",
+                source: "„Пренесете праха ми в България... тя ми е по-скъпа от всичко.“",
+                options: [
+                    { text: "В София, сред народа.", impacts: { foreign: 0, internal: 30, unification: 20 }, feedback: "Мавзолеят в София е вечен символ на връзката ви с България." },
+                    { text: "В родния Дармщат.", impacts: { foreign: 5, internal: -10, unification: 0 }, feedback: "Щяхте да останете само име в европейската аристокрация." }
+                ]
+            }
+        ];
+
+        let playerName = '';
+        let currentStep = 0;
+        let scores = { foreign: 50, internal: 50, unification: 50 };
+
+        const contentDiv = document.getElementById('content');
+        const playerDisplay = document.getElementById('player-display');
+
+        function renderMenu() {
+            contentDiv.innerHTML = `
+                <div class="flex-grow flex flex-col items-center justify-center text-center space-y-6 fade-in max-w-2xl mx-auto py-10">
+                    <div class="bg-white p-8 rounded-2xl shadow-xl border border-amber-200 w-full">
+                        <div class="text-amber-800 mb-6 flex justify-center">
+                            <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                        </div>
+                        <h2 class="text-2xl font-bold mb-6">Добре дошли в историята!</h2>
+                        <form id="start-form" class="space-y-6">
+                            <input id="name-input" type="text" required placeholder="Вашето име..." class="w-full px-6 py-4 rounded-xl border-2 border-amber-100 focus:border-amber-800 focus:outline-none transition-all text-lg text-center">
+                            <button type="submit" class="w-full bg-amber-800 hover:bg-amber-700 text-white font-bold py-5 rounded-xl shadow-lg transition-all active:scale-95 text-xl uppercase tracking-widest">ПРИЕМИ МИСИЯТА</button>
+                        </form>
+                    </div>
+                </div>
+            `;
+            document.getElementById('start-form').onsubmit = (e) => {
+                e.preventDefault();
+                playerName = document.getElementById('name-input').value;
+                if(playerName.length >= 2) startGame();
+            };
+        }
+
+        function startGame() {
+            playerDisplay.innerText = `Мисия на: ${playerName}`;
+            playerDisplay.classList.remove('hidden');
+            currentStep = 0;
+            scores = { foreign: 50, internal: 50, unification: 50 };
+            renderStep();
+        }
+
+        function renderScoreBoard() {
+            return `
+                <div class="bg-white p-4 rounded-xl shadow-md mb-6 grid grid-cols-1 md:grid-cols-3 gap-4 border border-amber-100">
+                    <div>
+                        <div class="flex justify-between text-[11px] font-bold text-gray-600 uppercase mb-1">
+                            <span>🌍 Външна Политика</span>
+                            <span>${scores.foreign}%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="h-2 rounded-full bg-blue-500 progress-transition" style="width: ${scores.foreign}%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-[11px] font-bold text-gray-600 uppercase mb-1">
+                            <span>👥 Вътрешна Политика</span>
+                            <span>${scores.internal}%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="h-2 rounded-full bg-green-600 progress-transition" style="width: ${scores.internal}%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-[11px] font-bold text-gray-600 uppercase mb-1">
+                            <span>🚩 Обединение</span>
+                            <span>${scores.unification}%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="h-2 rounded-full bg-red-600 progress-transition" style="width: ${scores.unification}%"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderStep() {
+            const step = CASES[currentStep];
+            contentDiv.innerHTML = `
+                <div class="flex flex-col flex-grow fade-in h-full">
+                    ${renderScoreBoard()}
+                    
+                    <div class="mb-4 flex justify-between items-center">
+                        <span class="text-xs font-black text-amber-900 uppercase tracking-widest bg-amber-200 px-3 py-1 rounded-full">КАЗУС ${currentStep + 1} / ${CASES.length}</span>
+                        <span class="text-lg font-bold text-amber-900 font-serif border-b-2 border-amber-800">${step.year}</span>
+                    </div>
+
+                    <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-6 leading-tight">${step.title}</h2>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 flex-grow">
+                        <div class="space-y-4">
+                            <!-- Зоната за изображение с фокус на лицето -->
+                            <div class="rounded-2xl overflow-hidden shadow-xl border-4 border-white h-64 sm:h-80 bg-amber-100 flex items-center justify-center relative">
+                                <img src="${step.imageUrl}" alt="${step.imageAlt}" class="w-full h-full portrait-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                                <div class="hidden flex-col items-center p-4 text-center text-amber-800 opacity-60">
+                                    <p class="text-xs font-bold italic">${step.imageAlt}</p>
+                                </div>
+                            </div>
+
+                            <div class="bg-white p-5 rounded-2xl border-l-8 border-amber-800 shadow-lg">
+                                <div class="flex items-center gap-2 text-amber-900 font-bold mb-2">
+                                    <span class="text-xs uppercase tracking-widest font-black">Исторически извор</span>
+                                </div>
+                                <p class="text-base sm:text-lg italic font-serif leading-relaxed text-gray-800">
+                                    „${step.source}“
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col justify-between">
+                            <div class="bg-white/60 p-5 sm:p-7 rounded-2xl border border-amber-200 shadow-inner mb-6">
+                                <p class="text-base sm:text-xl text-gray-700 leading-relaxed">
+                                    ${step.description}
+                                </p>
+                            </div>
+
+                            <div class="flex flex-col gap-3">
+                                <p class="text-xs font-black text-amber-900 uppercase mb-1 ml-1">Какво е вашето решение?</p>
+                                ${step.options.map((opt, idx) => `
+                                    <button onclick="handleOption(${idx})" class="text-left bg-white hover:bg-amber-900 hover:text-white border-2 border-amber-300 p-4 rounded-2xl transition-all font-bold text-base shadow-md active:scale-95 flex items-center gap-4 group">
+                                        <span class="w-8 h-8 rounded-full bg-amber-100 group-hover:bg-amber-800 text-amber-900 group-hover:text-white flex items-center justify-center shrink-0 border border-amber-300 font-black">${idx + 1}</span>
+                                        <span>${opt.text}</span>
+                                    </button>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        window.handleOption = (idx) => {
+            const option = CASES[currentStep].options[idx];
+            scores.foreign = Math.max(0, Math.min(100, scores.foreign + option.impacts.foreign));
+            scores.internal = Math.max(0, Math.min(100, scores.internal + option.impacts.internal));
+            scores.unification = Math.max(0, Math.min(100, scores.unification + option.impacts.unification));
+
+            contentDiv.innerHTML = `
+                <div class="flex flex-col flex-grow fade-in justify-center max-w-3xl mx-auto w-full">
+                    ${renderScoreBoard()}
+                    <div class="bg-amber-900 text-white p-8 sm:p-12 rounded-3xl shadow-2xl relative overflow-hidden">
+                        <h3 class="text-xs font-black uppercase mb-4 text-amber-300 tracking-widest">Последици:</h3>
+                        <p class="text-lg sm:text-2xl mb-8 leading-relaxed font-serif italic text-amber-50">
+                            ${option.feedback}
+                        </p>
+                        <button onclick="nextStep()" class="w-full bg-amber-100 hover:bg-white text-amber-900 font-black py-5 rounded-2xl transition-all active:scale-95 shadow-lg text-lg uppercase">
+                            Продължи напред ➔
+                        </button>
+                    </div>
+                </div>
+            `;
+        };
+
+        window.nextStep = () => {
+            currentStep++;
+            if (currentStep < CASES.length) {
+                renderStep();
+            } else {
+                renderFinal();
+            }
+        };
+
+        function renderFinal() {
+            contentDiv.innerHTML = `
+                <div class="flex-grow flex flex-col items-center justify-center text-center space-y-8 fade-in py-10 max-w-4xl mx-auto w-full">
+                    <h2 class="text-3xl sm:text-5xl font-black text-gray-800 uppercase tracking-tighter">Мисията приключи!</h2>
+                    
+                    <div class="w-full bg-white p-8 sm:p-12 rounded-[2rem] border-8 border-double border-amber-800 shadow-2xl relative">
+                        <p class="text-xs font-black text-amber-800 mb-4 uppercase tracking-[0.5em]">Почетна Грамота</p>
+                        <h3 class="text-2xl sm:text-4xl font-bold mb-2">За заслуги към Отечеството</h3>
+                        <p class="text-xl sm:text-3xl font-serif italic mb-10 text-amber-900 underline decoration-amber-300 decoration-4">„${playerName}“</p>
+                        
+                        <div class="mb-10">
+                            ${renderScoreBoard()}
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <button onclick="downloadResults()" class="flex items-center justify-center gap-3 bg-green-700 hover:bg-green-800 text-white px-8 py-5 rounded-2xl font-bold transition-all active:scale-95 shadow-xl text-lg">
+                                💾 Изтегли резултата
+                            </button>
+                            <button onclick="location.reload()" class="flex items-center justify-center gap-3 bg-amber-800 hover:bg-amber-900 text-white px-8 py-5 rounded-2xl font-bold transition-all active:scale-95 shadow-xl text-lg">
+                                🔄 Нов играч
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        window.downloadResults = () => {
+            const content = `ИСТОРИЧЕСКА МИСИЯ: КНЯЗ БАТЕНБЕРГ\n` +
+                            `Ученик: ${playerName}\n` +
+                            `Дата: ${new Date().toLocaleDateString('bg-BG')}\n\n` +
+                            `ПОСТИЖЕНИЯ:\n` +
+                            `- Външна политика: ${scores.foreign}%\n` +
+                            `- Вътрешна политика: ${scores.internal}%\n` +
+                            `- Обединение: ${scores.unification}%\n\n` +
+                            `„Боже, пази България!“`;
+            
+            const element = document.createElement("a");
+            const file = new Blob([content], {type: 'text/plain'});
+            element.href = URL.createObjectURL(file);
+            element.download = `Rezultat_${playerName}.txt`;
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+        };
+
+        renderMenu();
+
+    </script>
+</body>
+</html>
