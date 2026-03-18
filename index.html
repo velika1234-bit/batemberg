@@ -3,41 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Княз Батенберг: Решения и Съдби</title>
+    <title>Игра: Княз Батенберг - Решения и Съдби</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { font-family: 'Montserrat', sans-serif; }
-        .serif { font-family: 'Playfair Display', serif; }
-        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .progress-transition { transition: width 0.5s ease-in-out; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=Playfair+Display:italic,wght@700;900&display=swap');
         
-        /* Гарантираме, че лицето на портретите винаги се вижда */
-        .portrait-img {
-            object-fit: cover;
-            object-position: top center;
-        }
+        body { font-family: 'Inter', sans-serif; }
+        .serif { font-family: 'Playfair Display', serif; }
+        
+        .fade-in { animation: fadeIn 0.7s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        .zoom-in { animation: zoomIn 0.5s ease-out; }
+        @keyframes zoomIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-        /* Подобрен скрол за десктоп */
-        ::-webkit-scrollbar { width: 8px; }
+        .progress-transition { transition: width 0.7s ease-out; }
+        
+        /* Скриване на скролбара за чист вид */
+        ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #fef3c7; }
-        ::-webkit-scrollbar-thumb { background: #78350f; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #78350f; border-radius: 10px; }
     </style>
 </head>
-<body class="bg-slate-900 min-h-screen flex items-center justify-center p-0 sm:p-4">
+<body class="bg-slate-900 flex items-center justify-center p-0 md:p-6 min-h-screen">
 
-    <div id="game-container" class="w-full max-w-6xl bg-amber-50 sm:rounded-3xl shadow-2xl overflow-hidden border border-amber-200 flex flex-col min-h-screen sm:min-h-[90vh] relative">
-        
-        <!-- Header -->
-        <div class="bg-amber-900 text-amber-50 p-4 sm:p-6 text-center border-b-4 border-amber-700 shadow-md z-10">
-            <h1 class="text-xl sm:text-3xl font-bold tracking-widest uppercase">Княз Батенберг: Решения и Съдби</h1>
-            <p id="player-display" class="text-amber-200 text-xs sm:text-sm mt-1 font-medium hidden"></p>
-        </div>
-
-        <div id="content" class="p-4 sm:p-8 flex-grow flex flex-col overflow-y-auto">
-            <!-- Content -->
-        </div>
+    <div id="app" class="w-full max-w-5xl bg-amber-50 md:rounded-3xl shadow-2xl overflow-hidden border border-amber-200 flex flex-col min-h-screen md:min-h-[85vh] relative fade-in">
+        <!-- Тук се рендира съдържанието чрез JS -->
     </div>
 
     <script>
@@ -176,211 +168,242 @@
             }
         ];
 
-        let playerName = '';
-        let currentStep = 0;
-        let scores = { foreign: 50, internal: 50, unification: 50 };
+        let state = {
+            gameState: 'menu',
+            playerName: '',
+            currentStep: 0,
+            scores: { foreign: 50, internal: 50, unification: 50 },
+            lastFeedback: ''
+        };
 
-        const contentDiv = document.getElementById('content');
-        const playerDisplay = document.getElementById('player-display');
+        const appElement = document.getElementById('app');
 
-        function renderMenu() {
-            contentDiv.innerHTML = `
-                <div class="flex-grow flex flex-col items-center justify-center text-center space-y-6 fade-in max-w-2xl mx-auto py-10">
-                    <div class="bg-white p-8 rounded-2xl shadow-xl border border-amber-200 w-full">
-                        <div class="text-amber-800 mb-6 flex justify-center">
-                            <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+        function render() {
+            let content = '';
+
+            // Header (Always visible)
+            const header = `
+                <header class="bg-amber-900 text-amber-50 p-4 md:p-6 text-center border-b-4 border-amber-700 shadow-lg shrink-0 z-20">
+                    <h1 class="text-lg md:text-2xl font-black tracking-[0.2em] uppercase serif italic">Княз Батенберг</h1>
+                    <p class="text-amber-300 text-[10px] md:text-xs font-medium tracking-widest mt-1 opacity-80 uppercase">Решения и Съдби</p>
+                </header>
+            `;
+
+            if (state.gameState === 'menu') {
+                content = `
+                    <div class="flex-grow flex flex-col items-center justify-center text-center max-w-md mx-auto py-10 zoom-in">
+                        <div class="bg-white p-8 rounded-3xl shadow-xl border border-amber-200 w-full relative overflow-hidden">
+                            <div class="absolute top-0 left-0 w-full h-2 bg-amber-800"></div>
+                            <div class="text-amber-800 mb-6 flex justify-center">
+                                <i class="fas fa-history text-6xl opacity-80"></i>
+                            </div>
+                            <h2 class="text-xl md:text-2xl font-bold mb-4 text-slate-800">Добре дошли в историята!</h2>
+                            <p class="text-slate-500 text-sm mb-8 italic">Ще поемете ли отговорността за съдбата на една новородена държава?</p>
+                            
+                            <div class="space-y-4">
+                                <input type="text" id="playerNameInput" placeholder="Въведете името си..." 
+                                    class="w-full px-6 py-4 rounded-2xl border-2 border-slate-100 focus:border-amber-700 focus:outline-none transition-all text-center text-lg font-medium shadow-inner">
+                                <button onclick="startGame()" class="w-full bg-amber-800 hover:bg-amber-900 text-white font-bold py-5 rounded-2xl shadow-lg transition-all active:scale-95 text-lg tracking-widest uppercase flex items-center justify-center gap-2">
+                                    ПРИЕМИ МИСИЯТА <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
                         </div>
-                        <h2 class="text-2xl font-bold mb-6">Добре дошли в историята!</h2>
-                        <form id="start-form" class="space-y-6">
-                            <input id="name-input" type="text" required placeholder="Вашето име..." class="w-full px-6 py-4 rounded-xl border-2 border-amber-100 focus:border-amber-800 focus:outline-none transition-all text-lg text-center">
-                            <button type="submit" class="w-full bg-amber-800 hover:bg-amber-700 text-white font-bold py-5 rounded-xl shadow-lg transition-all active:scale-95 text-xl uppercase tracking-widest">ПРИЕМИ МИСИЯТА</button>
-                        </form>
+                    </div>
+                `;
+            } else if (state.gameState === 'playing') {
+                const currentCase = CASES[state.currentStep];
+                content = `
+                    <div class="flex-grow flex flex-col space-y-6 fade-in p-4 md:p-8 overflow-y-auto">
+                        <!-- Stats Bar -->
+                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-amber-100 grid grid-cols-1 md:grid-cols-3 gap-4 shrink-0">
+                            ${renderProgressBar("Външна Политика", state.scores.foreign, "bg-blue-600", "fa-globe")}
+                            ${renderProgressBar("Вътрешна Политика", state.scores.internal, "bg-emerald-600", "fa-users")}
+                            ${renderProgressBar("Обединение", state.scores.unification, "bg-rose-600", "fa-flag")}
+                        </div>
+
+                        <!-- Step Header -->
+                        <div class="flex justify-between items-end border-b border-amber-200 pb-2">
+                            <div class="flex flex-col">
+                                <span class="text-[10px] font-black text-amber-900/40 uppercase tracking-tighter">Етап ${state.currentStep + 1} от ${CASES.length}</span>
+                                <h3 class="text-lg md:text-2xl font-bold text-slate-800 leading-tight">${currentCase.title}</h3>
+                            </div>
+                            <div class="text-xl md:text-3xl font-black text-amber-900 serif italic border-l-4 border-amber-800 pl-4">
+                                ${currentCase.year}
+                            </div>
+                        </div>
+
+                        <!-- Main Layout -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                            <div class="space-y-6">
+                                <div class="relative group">
+                                    <div class="rounded-3xl overflow-hidden shadow-2xl border-4 border-white h-64 md:h-96 bg-amber-100">
+                                        <img src="${currentCase.imageUrl}" alt="${currentCase.imageAlt}" class="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105">
+                                    </div>
+                                    <div class="absolute -bottom-4 -right-4 bg-white p-4 rounded-2xl shadow-xl max-w-[80%] border border-amber-100 hidden md:block">
+                                        <i class="fas fa-quote-left text-amber-800 mb-2 opacity-30 text-xl"></i>
+                                        <p class="text-sm italic font-serif leading-relaxed text-slate-700">${currentCase.source}</p>
+                                    </div>
+                                </div>
+                                <div class="md:hidden bg-white p-4 rounded-2xl shadow-sm border-l-4 border-amber-800 italic font-serif text-sm">
+                                    ${currentCase.source}
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col justify-between space-y-8">
+                                <div class="bg-amber-100/50 p-6 md:p-8 rounded-3xl shadow-inner border border-amber-200/50">
+                                    <p class="text-base md:text-xl text-slate-700 leading-relaxed font-medium">${currentCase.description}</p>
+                                </div>
+
+                                <div class="space-y-3">
+                                    <span class="text-[10px] font-black text-amber-900 uppercase tracking-[0.2em] ml-2 opacity-60">Изберете действие:</span>
+                                    ${currentCase.options.map((opt, idx) => `
+                                        <button onclick="handleOption(${idx})" class="w-full text-left bg-white hover:bg-slate-900 hover:text-white border-2 border-slate-100 hover:border-slate-900 p-5 rounded-2xl transition-all duration-300 font-bold text-base md:text-lg shadow-sm hover:shadow-xl active:scale-[0.98] flex items-center gap-4 group text-slate-800">
+                                            <span class="w-10 h-10 rounded-xl bg-amber-50 group-hover:bg-amber-900 text-amber-900 group-hover:text-white flex items-center justify-center shrink-0 border border-amber-200 font-black transition-colors">
+                                                ${idx + 1}
+                                            </span>
+                                            <span>${opt.text}</span>
+                                        </button>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (state.gameState === 'feedback') {
+                content = `
+                    <div class="flex-grow flex flex-col items-center justify-center zoom-in max-w-2xl mx-auto w-full p-4">
+                        <div class="bg-amber-900 text-white p-8 md:p-14 rounded-[3rem] shadow-2xl relative overflow-hidden text-center w-full">
+                            <div class="absolute top-0 right-0 p-8 opacity-10">
+                                <i class="fas fa-scroll text-[120px]"></i>
+                            </div>
+                            <h3 class="text-xs font-black uppercase mb-6 text-amber-400 tracking-[0.4em]">Последици от решението</h3>
+                            <p class="text-xl md:text-3xl mb-12 leading-relaxed font-serif italic text-amber-50">„${state.lastFeedback}“</p>
+                            <button onclick="nextStep()" class="w-full bg-amber-100 hover:bg-white text-amber-900 font-black py-6 rounded-2xl transition-all active:scale-95 shadow-xl text-xl uppercase tracking-widest flex items-center justify-center gap-3">
+                                Към следващото изпитание <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else if (state.gameState === 'final') {
+                content = `
+                    <div class="flex-grow flex flex-col items-center justify-center space-y-10 fade-in py-10 max-w-4xl mx-auto w-full p-4">
+                        <div class="relative">
+                            <h2 class="text-3xl md:text-6xl font-black text-slate-800 uppercase tracking-tighter leading-none">Мисията приключи</h2>
+                            <div class="h-2 w-full bg-amber-800 mt-2"></div>
+                        </div>
+
+                        <div class="w-full bg-white p-8 md:p-16 rounded-[3rem] border-8 border-double border-amber-800 shadow-2xl relative overflow-hidden">
+                            <div class="absolute top-4 left-4 right-4 bottom-4 border border-amber-100 rounded-[2rem] pointer-events-none opacity-50"></div>
+                            <div class="relative z-10 space-y-8">
+                                <div class="text-center">
+                                    <span class="text-[10px] md:text-xs font-black text-amber-800 uppercase tracking-[0.5em] block mb-4">Почетно Свидетелство</span>
+                                    <h3 class="text-2xl md:text-4xl font-black text-slate-900 mb-2">За вярност към България</h3>
+                                    <p class="text-2xl md:text-5xl font-serif italic text-amber-900 underline decoration-amber-300 decoration-8 underline-offset-8">${state.playerName}</p>
+                                </div>
+
+                                <div class="bg-slate-50 p-6 md:p-10 rounded-3xl border border-slate-100 space-y-6">
+                                    <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest text-center">Оценка на управлението</h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        ${renderProgressBar("Външна Политика", state.scores.foreign, "bg-blue-600", "fa-globe")}
+                                        ${renderProgressBar("Вътрешна Политика", state.scores.internal, "bg-emerald-600", "fa-users")}
+                                        ${renderProgressBar("Обединение", state.scores.unification, "bg-rose-600", "fa-flag")}
+                                    </div>
+                                </div>
+
+                                <div class="flex flex-col md:flex-row gap-4">
+                                    <button onclick="downloadResults()" class="flex-1 flex items-center justify-center gap-3 bg-slate-900 hover:bg-black text-white px-8 py-5 rounded-2xl font-bold transition-all active:scale-95 shadow-xl text-lg uppercase tracking-widest">
+                                        <i class="fas fa-download"></i> Изтегли Грамота
+                                    </button>
+                                    <button onclick="location.reload()" class="flex-1 flex items-center justify-center gap-3 bg-amber-800 hover:bg-amber-900 text-white px-8 py-5 rounded-2xl font-bold transition-all active:scale-95 shadow-xl text-lg uppercase tracking-widest">
+                                        <i class="fas fa-undo"></i> Опитай отново
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2 text-slate-400 font-serif italic">
+                            <i class="fas fa-award text-amber-600"></i>
+                            <span>„Боже, пази България!“</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            const footer = (state.gameState === 'menu' || state.gameState === 'final') ? `
+                <footer class="p-4 text-center text-[10px] text-amber-900/40 uppercase tracking-widest font-bold">
+                    Образователен проект по история • 2026
+                </footer>
+            ` : '';
+
+            appElement.innerHTML = header + content + footer;
+        }
+
+        function renderProgressBar(label, value, color, icon) {
+            return `
+                <div class="w-full">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-[10px] md:text-xs font-bold text-slate-600 uppercase flex items-center gap-1">
+                            <i class="fas ${icon} text-[12px]"></i> ${label}
+                        </span>
+                        <span class="text-xs font-black text-slate-800">${value}%</span>
+                    </div>
+                    <div class="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                        <div class="h-full progress-transition ${color}" style="width: ${value}%"></div>
                     </div>
                 </div>
             `;
-            document.getElementById('start-form').onsubmit = (e) => {
-                e.preventDefault();
-                playerName = document.getElementById('name-input').value;
-                if(playerName.length >= 2) startGame();
-            };
         }
 
         function startGame() {
-            playerDisplay.innerText = `Мисия на: ${playerName}`;
-            playerDisplay.classList.remove('hidden');
-            currentStep = 0;
-            scores = { foreign: 50, internal: 50, unification: 50 };
-            renderStep();
-        }
-
-        function renderScoreBoard() {
-            return `
-                <div class="bg-white p-4 rounded-xl shadow-md mb-6 grid grid-cols-1 md:grid-cols-3 gap-4 border border-amber-100">
-                    <div>
-                        <div class="flex justify-between text-[11px] font-bold text-gray-600 uppercase mb-1">
-                            <span>🌍 Външна Политика</span>
-                            <span>${scores.foreign}%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="h-2 rounded-full bg-blue-500 progress-transition" style="width: ${scores.foreign}%"></div>
-                        </div>
-                    </div>
-                    <div>
-                        <div class="flex justify-between text-[11px] font-bold text-gray-600 uppercase mb-1">
-                            <span>👥 Вътрешна Политика</span>
-                            <span>${scores.internal}%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="h-2 rounded-full bg-green-600 progress-transition" style="width: ${scores.internal}%"></div>
-                        </div>
-                    </div>
-                    <div>
-                        <div class="flex justify-between text-[11px] font-bold text-gray-600 uppercase mb-1">
-                            <span>🚩 Обединение</span>
-                            <span>${scores.unification}%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="h-2 rounded-full bg-red-600 progress-transition" style="width: ${scores.unification}%"></div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function renderStep() {
-            const step = CASES[currentStep];
-            contentDiv.innerHTML = `
-                <div class="flex flex-col flex-grow fade-in h-full">
-                    ${renderScoreBoard()}
-                    
-                    <div class="mb-4 flex justify-between items-center">
-                        <span class="text-xs font-black text-amber-900 uppercase tracking-widest bg-amber-200 px-3 py-1 rounded-full">КАЗУС ${currentStep + 1} / ${CASES.length}</span>
-                        <span class="text-lg font-bold text-amber-900 font-serif border-b-2 border-amber-800">${step.year}</span>
-                    </div>
-
-                    <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-6 leading-tight">${step.title}</h2>
-                    
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 flex-grow">
-                        <div class="space-y-4">
-                            <!-- Зоната за изображение с фокус на лицето -->
-                            <div class="rounded-2xl overflow-hidden shadow-xl border-4 border-white h-64 sm:h-80 bg-amber-100 flex items-center justify-center relative">
-                                <img src="${step.imageUrl}" alt="${step.imageAlt}" class="w-full h-full portrait-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
-                                <div class="hidden flex-col items-center p-4 text-center text-amber-800 opacity-60">
-                                    <p class="text-xs font-bold italic">${step.imageAlt}</p>
-                                </div>
-                            </div>
-
-                            <div class="bg-white p-5 rounded-2xl border-l-8 border-amber-800 shadow-lg">
-                                <div class="flex items-center gap-2 text-amber-900 font-bold mb-2">
-                                    <span class="text-xs uppercase tracking-widest font-black">Исторически извор</span>
-                                </div>
-                                <p class="text-base sm:text-lg italic font-serif leading-relaxed text-gray-800">
-                                    „${step.source}“
-                                </p>
-                            </div>
-                        </div>
-
-                        <div class="flex flex-col justify-between">
-                            <div class="bg-white/60 p-5 sm:p-7 rounded-2xl border border-amber-200 shadow-inner mb-6">
-                                <p class="text-base sm:text-xl text-gray-700 leading-relaxed">
-                                    ${step.description}
-                                </p>
-                            </div>
-
-                            <div class="flex flex-col gap-3">
-                                <p class="text-xs font-black text-amber-900 uppercase mb-1 ml-1">Какво е вашето решение?</p>
-                                ${step.options.map((opt, idx) => `
-                                    <button onclick="handleOption(${idx})" class="text-left bg-white hover:bg-amber-900 hover:text-white border-2 border-amber-300 p-4 rounded-2xl transition-all font-bold text-base shadow-md active:scale-95 flex items-center gap-4 group">
-                                        <span class="w-8 h-8 rounded-full bg-amber-100 group-hover:bg-amber-800 text-amber-900 group-hover:text-white flex items-center justify-center shrink-0 border border-amber-300 font-black">${idx + 1}</span>
-                                        <span>${opt.text}</span>
-                                    </button>
-                                `).join('')}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        window.handleOption = (idx) => {
-            const option = CASES[currentStep].options[idx];
-            scores.foreign = Math.max(0, Math.min(100, scores.foreign + option.impacts.foreign));
-            scores.internal = Math.max(0, Math.min(100, scores.internal + option.impacts.internal));
-            scores.unification = Math.max(0, Math.min(100, scores.unification + option.impacts.unification));
-
-            contentDiv.innerHTML = `
-                <div class="flex flex-col flex-grow fade-in justify-center max-w-3xl mx-auto w-full">
-                    ${renderScoreBoard()}
-                    <div class="bg-amber-900 text-white p-8 sm:p-12 rounded-3xl shadow-2xl relative overflow-hidden">
-                        <h3 class="text-xs font-black uppercase mb-4 text-amber-300 tracking-widest">Последици:</h3>
-                        <p class="text-lg sm:text-2xl mb-8 leading-relaxed font-serif italic text-amber-50">
-                            ${option.feedback}
-                        </p>
-                        <button onclick="nextStep()" class="w-full bg-amber-100 hover:bg-white text-amber-900 font-black py-5 rounded-2xl transition-all active:scale-95 shadow-lg text-lg uppercase">
-                            Продължи напред ➔
-                        </button>
-                    </div>
-                </div>
-            `;
-        };
-
-        window.nextStep = () => {
-            currentStep++;
-            if (currentStep < CASES.length) {
-                renderStep();
-            } else {
-                renderFinal();
+            const nameInput = document.getElementById('playerNameInput');
+            if (nameInput && nameInput.value.trim().length >= 2) {
+                state.playerName = nameInput.value.trim();
+                state.gameState = 'playing';
+                render();
             }
-        };
-
-        function renderFinal() {
-            contentDiv.innerHTML = `
-                <div class="flex-grow flex flex-col items-center justify-center text-center space-y-8 fade-in py-10 max-w-4xl mx-auto w-full">
-                    <h2 class="text-3xl sm:text-5xl font-black text-gray-800 uppercase tracking-tighter">Мисията приключи!</h2>
-                    
-                    <div class="w-full bg-white p-8 sm:p-12 rounded-[2rem] border-8 border-double border-amber-800 shadow-2xl relative">
-                        <p class="text-xs font-black text-amber-800 mb-4 uppercase tracking-[0.5em]">Почетна Грамота</p>
-                        <h3 class="text-2xl sm:text-4xl font-bold mb-2">За заслуги към Отечеството</h3>
-                        <p class="text-xl sm:text-3xl font-serif italic mb-10 text-amber-900 underline decoration-amber-300 decoration-4">„${playerName}“</p>
-                        
-                        <div class="mb-10">
-                            ${renderScoreBoard()}
-                        </div>
-
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <button onclick="downloadResults()" class="flex items-center justify-center gap-3 bg-green-700 hover:bg-green-800 text-white px-8 py-5 rounded-2xl font-bold transition-all active:scale-95 shadow-xl text-lg">
-                                💾 Изтегли резултата
-                            </button>
-                            <button onclick="location.reload()" class="flex items-center justify-center gap-3 bg-amber-800 hover:bg-amber-900 text-white px-8 py-5 rounded-2xl font-bold transition-all active:scale-95 shadow-xl text-lg">
-                                🔄 Нов играч
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
         }
 
-        window.downloadResults = () => {
+        function handleOption(optionIndex) {
+            const option = CASES[state.currentStep].options[optionIndex];
+            state.scores.foreign = Math.max(0, Math.min(100, state.scores.foreign + option.impacts.foreign));
+            state.scores.internal = Math.max(0, Math.min(100, state.scores.internal + option.impacts.internal));
+            state.scores.unification = Math.max(0, Math.min(100, state.scores.unification + option.impacts.unification));
+            state.lastFeedback = option.feedback;
+            state.gameState = 'feedback';
+            render();
+        }
+
+        function nextStep() {
+            if (state.currentStep < CASES.length - 1) {
+                state.currentStep++;
+                state.gameState = 'playing';
+            } else {
+                state.gameState = 'final';
+            }
+            render();
+        }
+
+        function downloadResults() {
             const content = `ИСТОРИЧЕСКА МИСИЯ: КНЯЗ БАТЕНБЕРГ\n` +
-                            `Ученик: ${playerName}\n` +
+                            `Ученик: ${state.playerName}\n` +
                             `Дата: ${new Date().toLocaleDateString('bg-BG')}\n\n` +
                             `ПОСТИЖЕНИЯ:\n` +
-                            `- Външна политика: ${scores.foreign}%\n` +
-                            `- Вътрешна политика: ${scores.internal}%\n` +
-                            `- Обединение: ${scores.unification}%\n\n` +
+                            `- Външна политика: ${state.scores.foreign}%\n` +
+                            `- Вътрешна политика: ${state.scores.internal}%\n` +
+                            `- Обединение: ${state.scores.unification}%\n\n` +
                             `„Боже, пази България!“`;
             
             const element = document.createElement("a");
             const file = new Blob([content], {type: 'text/plain'});
             element.href = URL.createObjectURL(file);
-            element.download = `Rezultat_${playerName}.txt`;
+            element.download = `Rezultat_${state.playerName}.txt`;
             document.body.appendChild(element);
             element.click();
             document.body.removeChild(element);
-        };
+        }
 
-        renderMenu();
-
+        // Първоначално рендиране
+        render();
     </script>
 </body>
 </html>
